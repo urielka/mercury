@@ -41,6 +41,8 @@ export function inferConversationKind(
       return "channel";
     case "teams":
       return "channel";
+    case "telegram":
+      return "group";
     default:
       return "group";
   }

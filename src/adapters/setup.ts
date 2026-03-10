@@ -4,6 +4,7 @@ import type { Adapter } from "chat";
 import type { AppConfig } from "../config.js";
 import { resolveProjectPath } from "../config.js";
 import { createDiscordNativeAdapter } from "./discord-native.js";
+import { createTelegramAdapter } from "./telegram.js";
 import { createWhatsAppBaileysAdapter } from "./whatsapp.js";
 
 export function setupAdapters(config: AppConfig): Record<string, Adapter> {
@@ -70,9 +71,21 @@ export function setupAdapters(config: AppConfig): Record<string, Adapter> {
     });
   }
 
+  if (config.enableTelegram) {
+    if (!process.env.MERCURY_TELEGRAM_BOT_TOKEN) {
+      throw new Error(
+        "MERCURY_ENABLE_TELEGRAM=true but MERCURY_TELEGRAM_BOT_TOKEN is not set",
+      );
+    }
+    adapters.telegram = createTelegramAdapter({
+      botToken: process.env.MERCURY_TELEGRAM_BOT_TOKEN,
+      userName: config.botUsername,
+    });
+  }
+
   if (Object.keys(adapters).length === 0) {
     throw new Error(
-      "No adapters enabled. Set MERCURY_ENABLE_WHATSAPP, MERCURY_ENABLE_DISCORD, or MERCURY_ENABLE_SLACK to true",
+      "No adapters enabled. Set MERCURY_ENABLE_WHATSAPP, MERCURY_ENABLE_DISCORD, MERCURY_ENABLE_SLACK, or MERCURY_ENABLE_TELEGRAM to true",
     );
   }
 

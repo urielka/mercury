@@ -210,19 +210,17 @@ export class AgentContainerRunner {
         value: value,
       }));
 
-    // Check for pi auth file fallback for Anthropic
-    const hasAnthropicKey = passthroughEnvPairs.some(
-      (p) => p.key === "ANTHROPIC_API_KEY" || p.key === "ANTHROPIC_OAUTH_TOKEN",
-    );
-    if (
-      !hasAnthropicKey &&
-      this.config.modelProvider === "anthropic" &&
-      authFromPi
-    ) {
-      passthroughEnvPairs.push({
-        key: "ANTHROPIC_OAUTH_TOKEN",
-        value: authFromPi,
-      });
+    // Check for pi auth file fallback (Anthropic, OpenAI, etc.)
+    if (authFromPi) {
+      const alreadyHasKey = passthroughEnvPairs.some(
+        (p) => p.key === authFromPi.envKey,
+      );
+      if (!alreadyHasKey) {
+        passthroughEnvPairs.push({
+          key: authFromPi.envKey,
+          value: authFromPi.apiKey,
+        });
+      }
     }
 
     const envPairs = [

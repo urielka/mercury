@@ -29,25 +29,52 @@ function writeAuthFile(authPath: string, auth: AuthFile): void {
   fs.chmodSync(authPath, 0o600);
 }
 
+/**
+ * Maps model provider name to OAuth provider ID used in auth.json
+ * and the environment variable name used to pass the token to containers.
+ */
+const PROVIDER_OAUTH_MAP: Record<
+  string,
+  { oauthId: string; envKey: string; skipEnvKeys: string[] }
+> = {
+  anthropic: {
+    oauthId: "anthropic",
+    envKey: "ANTHROPIC_OAUTH_TOKEN",
+    skipEnvKeys: ["MERCURY_ANTHROPIC_API_KEY", "MERCURY_ANTHROPIC_OAUTH_TOKEN"],
+  },
+  openai: {
+    oauthId: "openai-codex",
+    envKey: "OPENAI_API_KEY",
+    skipEnvKeys: ["MERCURY_OPENAI_API_KEY", "MERCURY_OPENAI_OAUTH_TOKEN"],
+  },
+  "openai-codex": {
+    oauthId: "openai-codex",
+    envKey: "OPENAI_API_KEY",
+    skipEnvKeys: ["MERCURY_OPENAI_API_KEY", "MERCURY_OPENAI_OAUTH_TOKEN"],
+  },
+};
+
+export interface OAuthResult {
+  apiKey: string;
+  envKey: string;
+}
+
 export async function getApiKeyFromPiAuthFile(options: {
   provider: string;
   authPath: string;
-}): Promise<string | undefined> {
-  if (
-    process.env.MERCURY_ANTHROPIC_API_KEY ||
-    process.env.MERCURY_ANTHROPIC_OAUTH_TOKEN
-  ) {
-    return undefined;
-  }
+}): Promise<OAuthResult | undefined> {
+  const mapping = PROVIDER_OAUTH_MAP[options.provider];
+  if (!mapping) return undefined;
 
-  if (options.provider !== "anthropic") {
-    return undefined;
+  // Skip if explicit API key or token is already set
+  for (const envKey of mapping.skipEnvKeys) {
+    if (process.env[envKey]) return undefined;
   }
 
   const authPath = options.authPath;
   const auth = readAuthFile(authPath);
 
-  const entry = auth.anthropic;
+  const entry = auth[mapping.oauthId];
   if (!entry || typeof entry !== "object" || entry.type !== "oauth") {
     return undefined;
   }
@@ -58,8 +85,8 @@ export async function getApiKeyFromPiAuthFile(options: {
   if (!access || !refresh || typeof expires !== "number") return undefined;
 
   try {
-    const result = await getOAuthApiKey("anthropic" satisfies OAuthProviderId, {
-      anthropic: {
+    const result = await getOAuthApiKey(mapping.oauthId as OAuthProviderId, {
+      [mapping.oauthId]: {
         access,
         refresh,
         expires,
@@ -70,20 +97,20 @@ export async function getApiKeyFromPiAuthFile(options: {
 
     const nextAuth = {
       ...auth,
-      anthropic: {
+      [mapping.oauthId]: {
         type: "oauth" as const,
         ...result.newCredentials,
       },
     };
 
     writeAuthFile(authPath, nextAuth);
-    logger.debug("Loaded anthropic oauth token from pi auth.json", {
+    logger.debug(`Loaded ${mapping.oauthId} oauth token from pi auth.json`, {
       authPath,
     });
-    return result.apiKey;
+    return { apiKey: result.apiKey, envKey: mapping.envKey };
   } catch (error) {
     logger.warn(
-      "Failed to load anthropic oauth token from pi auth.json",
+      `Failed to load ${mapping.oauthId} oauth token from pi auth.json`,
       error instanceof Error ? error : undefined,
     );
     return undefined;

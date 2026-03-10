@@ -64,6 +64,9 @@ const schema = z.object({
   // ─── WhatsApp ───────────────────────────────────────────────────────
   enableWhatsApp: z.coerce.boolean().default(false),
 
+  // ─── Telegram ─────────────────────────────────────────────────────
+  enableTelegram: z.coerce.boolean().default(false),
+
   // ─── Media Handling ─────────────────────────────────────────────────
   mediaEnabled: z.coerce.boolean().default(true),
   mediaMaxSizeMb: z.coerce.number().min(1).max(100).default(10),
@@ -124,6 +127,9 @@ export function loadConfig(): AppConfig {
 
     // WhatsApp
     enableWhatsApp: process.env.MERCURY_ENABLE_WHATSAPP,
+
+    // Telegram
+    enableTelegram: process.env.MERCURY_ENABLE_TELEGRAM,
 
     // Media Handling
     mediaEnabled: process.env.MERCURY_MEDIA_ENABLED,

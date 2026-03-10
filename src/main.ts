@@ -3,9 +3,11 @@ import { fileURLToPath } from "node:url";
 import type { Adapter, Message } from "chat";
 import type { DiscordNativeAdapter } from "./adapters/discord-native.js";
 import { setupAdapters } from "./adapters/setup.js";
+import type { TelegramAdapter } from "./adapters/telegram.js";
 import type { WhatsAppBaileysAdapter } from "./adapters/whatsapp.js";
 import { DiscordBridge } from "./bridges/discord.js";
 import { SlackBridge } from "./bridges/slack.js";
+import { TelegramBridge } from "./bridges/telegram.js";
 import { TeamsBridge } from "./bridges/teams.js";
 import { WhatsAppBridge } from "./bridges/whatsapp.js";
 import { createChatShim } from "./chat-shim.js";
@@ -104,6 +106,11 @@ async function main() {
   }
   if (adapters.teams) {
     bridges.teams = new TeamsBridge(adapters.teams);
+  }
+  if (adapters.telegram) {
+    bridges.telegram = new TelegramBridge(
+      adapters.telegram as TelegramAdapter,
+    );
   }
 
   const normalizeCtx: NormalizeContext = {
@@ -258,6 +265,9 @@ async function main() {
     logger.info("WhatsApp enabled", {
       authDir: resolveProjectPath(config.whatsappAuthDir),
     });
+  }
+  if (adapters.telegram) {
+    logger.info("Telegram enabled (Bot API long polling)");
   }
 }
 

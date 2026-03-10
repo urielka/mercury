@@ -169,6 +169,10 @@ function initAction(): void {
   copySourceFile("src/cli/mrctl.ts", "src/cli/mrctl.ts");
   copySourceFile("src/extensions/reserved.ts", "src/extensions/reserved.ts");
   copySourceFile("src/types.ts", "src/types.ts");
+  copySourceFile(
+    "resources/extensions/permission-guard.ts",
+    "resources/extensions/permission-guard.ts",
+  );
 
   // Build container
   console.log("\n📦 Building container image...\n");
