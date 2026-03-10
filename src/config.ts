@@ -72,6 +72,9 @@ const schema = z.object({
   mediaEnabled: z.coerce.boolean().default(true),
   mediaMaxSizeMb: z.coerce.number().min(1).max(100).default(10),
 
+  // ─── MCP ────────────────────────────────────────────────────────────
+  mcpServersConfig: z.string().default(""), // path to mcp_servers.json file
+
   // ─── Permissions ────────────────────────────────────────────────────
   admins: z.string().default(""),
 });
@@ -136,6 +139,9 @@ export function loadConfig(): AppConfig {
     // Media Handling
     mediaEnabled: process.env.MERCURY_MEDIA_ENABLED,
     mediaMaxSizeMb: process.env.MERCURY_MEDIA_MAX_SIZE_MB,
+
+    // MCP
+    mcpServersConfig: process.env.MERCURY_MCP_SERVERS_CONFIG,
 
     // Permissions
     admins: process.env.MERCURY_ADMINS,

@@ -25,6 +25,7 @@ ENV PATH="/usr/local/go/bin:$PATH"
 
 # Install CLIs
 RUN bun add -g @mariozechner/pi-coding-agent
+RUN bun add -g https://github.com/philschmid/mcp-cli
 
 WORKDIR /app
 

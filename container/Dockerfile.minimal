@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install CLIs
 RUN bun add -g @mariozechner/pi-coding-agent
+RUN bun add -g https://github.com/philschmid/mcp-cli
 
 # Install Playwright Chromium
 RUN bunx playwright install chromium

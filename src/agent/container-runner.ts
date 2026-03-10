@@ -251,6 +251,7 @@ export class AgentContainerRunner {
       containerName,
       "--label",
       CONTAINER_LABEL,
+      "--add-host=host.docker.internal:host-gateway",
       "-v",
       `${spacesRoot}:/spaces`,
       "-v",
@@ -260,6 +261,39 @@ export class AgentContainerRunner {
       "-v",
       `${docsDir}:/docs/mercury/docs:ro`,
     ];
+
+    // Mount MCP servers config file if configured
+    if (this.config.mcpServersConfig) {
+      const mcpConfigPath = path.resolve(this.config.mcpServersConfig);
+      if (fs.existsSync(mcpConfigPath)) {
+        args.push(
+          "-v",
+          `${mcpConfigPath}:/root/.config/mcp/mcp_servers.json:ro`,
+        );
+
+        // Pass through env vars referenced in mcp config's ${VAR} substitutions
+        try {
+          const mcpConfigContent = fs.readFileSync(mcpConfigPath, "utf8");
+          const varRefs = mcpConfigContent.match(/\$\{(\w+)\}/g);
+          if (varRefs) {
+            const seen = new Set<string>();
+            for (const ref of varRefs) {
+              const varName = ref.slice(2, -1);
+              if (!seen.has(varName) && process.env[varName]) {
+                args.push("-e", `${varName}=${process.env[varName]}`);
+                seen.add(varName);
+              }
+            }
+          }
+        } catch {
+          // If we can't read the config to extract vars, continue without them
+        }
+      } else {
+        logger.warn("MCP servers config file not found", {
+          path: mcpConfigPath,
+        });
+      }
+    }
 
     for (const { key, value } of envPairs) {
       args.push("-e", `${key}=${value}`);

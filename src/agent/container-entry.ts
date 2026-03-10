@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { MessageAttachment, StoredMessage } from "../types.js";
 
@@ -129,6 +129,12 @@ function runPi(payload: Payload): Promise<string> {
     const extPrompt = process.env.MERCURY_EXT_SYSTEM_PROMPT;
     if (extPrompt) {
       systemPrompt = `${systemPrompt}\n\n${extPrompt}`;
+    }
+
+    // Append MCP hint when config is mounted
+    const mcpConfigPath = "/root/.config/mcp/mcp_servers.json";
+    if (existsSync(mcpConfigPath)) {
+      systemPrompt = `${systemPrompt}\n\n## MCP Tools\nYou have access to external MCP tool servers via \`mcp-cli\`. Use the mcp-cli skill to learn the commands. Start with \`mcp-cli\` to list available servers and tools.`;
     }
 
     const args = [
