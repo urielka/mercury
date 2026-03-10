@@ -66,6 +66,7 @@ const schema = z.object({
 
   // ─── Telegram ─────────────────────────────────────────────────────
   enableTelegram: z.coerce.boolean().default(false),
+  telegramAllowedUserIds: z.string().default(""),
 
   // ─── Media Handling ─────────────────────────────────────────────────
   mediaEnabled: z.coerce.boolean().default(true),
@@ -130,6 +131,7 @@ export function loadConfig(): AppConfig {
 
     // Telegram
     enableTelegram: process.env.MERCURY_ENABLE_TELEGRAM,
+    telegramAllowedUserIds: process.env.MERCURY_TELEGRAM_ALLOWED_USER_IDS,
 
     // Media Handling
     mediaEnabled: process.env.MERCURY_MEDIA_ENABLED,

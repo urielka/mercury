@@ -80,6 +80,7 @@ export function setupAdapters(config: AppConfig): Record<string, Adapter> {
     adapters.telegram = createTelegramAdapter({
       botToken: process.env.MERCURY_TELEGRAM_BOT_TOKEN,
       userName: config.botUsername,
+      allowedUserIds: config.telegramAllowedUserIds,
     });
   }
 

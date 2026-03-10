@@ -269,12 +269,15 @@ function displayName(user?: TelegramUser): string {
 export interface TelegramAdapterOptions {
   botToken: string;
   userName?: string;
+  /** Comma-separated list of Telegram user IDs allowed to interact with the bot. Empty = allow all. */
+  allowedUserIds?: string;
 }
 
 export class TelegramAdapter implements Adapter<string, TelegramMessage> {
   readonly name = "telegram";
   readonly userName: string;
   readonly botToken: string;
+  private readonly allowedUserIds: Set<number>;
 
   private chat?: ChatInstance;
   private polling = false;
@@ -287,6 +290,14 @@ export class TelegramAdapter implements Adapter<string, TelegramMessage> {
   constructor(options: TelegramAdapterOptions) {
     this.botToken = options.botToken;
     this.userName = options.userName ?? "mercury";
+    this.allowedUserIds = new Set(
+      (options.allowedUserIds ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map(Number)
+        .filter((n) => !Number.isNaN(n)),
+    );
   }
 
   get botUserId(): string | undefined {
@@ -562,6 +573,18 @@ export class TelegramAdapter implements Adapter<string, TelegramMessage> {
   private async handleIncomingMessage(msg: TelegramMessage): Promise<void> {
     // Skip bot's own messages
     if (msg.from?.id === this.botUser?.id) return;
+
+    // Filter by allowed user IDs when configured
+    if (this.allowedUserIds.size > 0) {
+      const senderId = msg.from?.id;
+      if (!senderId || !this.allowedUserIds.has(senderId)) {
+        logger.debug("Telegram message rejected: user not in allowed list", {
+          senderId,
+          chatId: msg.chat.id,
+        });
+        return;
+      }
+    }
 
     const messageKey = `${msg.chat.id}:${msg.message_id}`;
     if (this.seenMessageIds.has(messageKey)) return;
